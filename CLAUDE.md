@@ -45,6 +45,8 @@ completion; a vision agent only recommends. Full data model and flows: @SPEC.md
 
 ## Commands
 
-<!-- Fill in once scaffolded, e.g.: -->
-
-<!-- Dev: npm run dev   |  Test: npm test  |  Migrate: npx prisma migrate dev  |  Eval: npm run eval -->
+- Dev: `npm run dev`
+- Test: `npm test`
+- Migrate: `npx prisma migrate dev`
+- Eval: `npm run eval`
+- Docker: `docker compose up -d`

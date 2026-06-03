@@ -1,0 +1,14 @@
+[
+  {
+    "photo": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/14/Made_bed.jpg/320px-Made_bed.jpg",
+    "task": "Make bed",
+    "expected": "LOOKS_DONE",
+    "note": "Clearly made bed — synthetic/public domain photo"
+  },
+  {
+    "photo": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a7/Camponotus_flavomarginatus_ant.jpg/320px-Camponotus_flavomarginatus_ant.jpg",
+    "task": "Make bed",
+    "expected": "NOT_DONE",
+    "note": "Irrelevant photo (ant) — should detect as NOT_DONE"
+  }
+]

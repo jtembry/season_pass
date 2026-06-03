@@ -1,0 +1,213 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../app/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  PARENT
+}
+
+enum TaskCategory {
+  GET_READY
+  BREAKFAST
+  LUNCH
+  DINNER
+  BEDTIME
+  STUDY
+  WEEKLY
+  DAILY_ANYTIME
+  BONUS
+}
+
+enum Cadence {
+  DAILY
+  WEEKLY
+  ONE_TIME
+}
+
+enum CompletionStatus {
+  PENDING_REVIEW
+  APPROVED
+  REJECTED
+}
+
+enum Verdict {
+  LOOKS_DONE
+  NOT_DONE
+  UNSURE
+}
+
+enum LedgerEntryType {
+  COMPLETION
+  BONUS
+  ADJUSTMENT
+  REDEMPTION
+}
+
+enum RewardWindow {
+  WEEKLY
+  CUMULATIVE
+}
+
+enum RewardMode {
+  THRESHOLD
+  REDEEMABLE
+}
+
+model Household {
+  id        String   @id @default(cuid())
+  name      String
+  createdAt DateTime @default(now())
+
+  users         User[]
+  children      ChildProfile[]
+  tasks         TaskDefinition[]
+  completions   Completion[]
+  ledgerEntries PointsLedgerEntry[]
+  rewards       Reward[]
+}
+
+model User {
+  id           String   @id @default(cuid())
+  householdId  String
+  email        String   @unique
+  passwordHash String
+  role         Role     @default(PARENT)
+  createdAt    DateTime @default(now())
+
+  household     Household    @relation(fields: [householdId], references: [id])
+  reviewedItems Completion[] @relation("ReviewedBy")
+}
+
+model ChildProfile {
+  id          String    @id @default(cuid())
+  householdId String
+  displayName String
+  avatar      String?
+  birthdate   DateTime?
+  pinHash     String?
+  createdAt   DateTime  @default(now())
+
+  household     Household           @relation(fields: [householdId], references: [id])
+  assignments   TaskAssignment[]
+  completions   Completion[]
+  ledgerEntries PointsLedgerEntry[]
+  rewardGrants  RewardGrant[]
+}
+
+model TaskDefinition {
+  id            String       @id @default(cuid())
+  householdId   String
+  title         String
+  icon          String?
+  category      TaskCategory
+  points        Int
+  cadence       Cadence
+  dueBy         String?
+  requiresPhoto Boolean      @default(false)
+  isBonus       Boolean      @default(false)
+  repeatable    Boolean      @default(false)
+  active        Boolean      @default(true)
+  createdAt     DateTime     @default(now())
+
+  household   Household        @relation(fields: [householdId], references: [id])
+  assignments TaskAssignment[]
+  completions Completion[]
+}
+
+model TaskAssignment {
+  id               String @id @default(cuid())
+  taskDefinitionId String
+  childProfileId   String
+
+  task  TaskDefinition @relation(fields: [taskDefinitionId], references: [id])
+  child ChildProfile   @relation(fields: [childProfileId], references: [id])
+
+  @@unique([taskDefinitionId, childProfileId])
+}
+
+model Completion {
+  id               String           @id @default(cuid())
+  householdId      String
+  taskDefinitionId String
+  childProfileId   String
+  periodKey        String
+  status           CompletionStatus @default(PENDING_REVIEW)
+  pointsAwarded    Int?
+  photoUrl         String?
+  submittedAt      DateTime         @default(now())
+  reviewedById     String?
+  reviewedAt       DateTime?
+  reviewNote       String?
+
+  household     Household           @relation(fields: [householdId], references: [id])
+  task          TaskDefinition      @relation(fields: [taskDefinitionId], references: [id])
+  child         ChildProfile        @relation(fields: [childProfileId], references: [id])
+  reviewedBy    User?               @relation("ReviewedBy", fields: [reviewedById], references: [id])
+  verifications VerificationCheck[]
+  ledgerEntry   PointsLedgerEntry?
+
+  @@unique([taskDefinitionId, childProfileId, periodKey])
+  @@index([householdId, status])
+}
+
+model VerificationCheck {
+  id           String   @id @default(cuid())
+  completionId String
+  verdict      Verdict
+  confidence   Float
+  reasoning    String
+  modelVersion String
+  latencyMs    Int
+  costUsd      Float
+  createdAt    DateTime @default(now())
+
+  completion Completion @relation(fields: [completionId], references: [id])
+}
+
+model PointsLedgerEntry {
+  id                 String          @id @default(cuid())
+  householdId        String
+  childProfileId     String
+  type               LedgerEntryType
+  amount             Int
+  sourceCompletionId String?         @unique
+  note               String?
+  occurredAt         DateTime        @default(now())
+
+  household        Household    @relation(fields: [householdId], references: [id])
+  child            ChildProfile @relation(fields: [childProfileId], references: [id])
+  sourceCompletion Completion?  @relation(fields: [sourceCompletionId], references: [id])
+
+  @@index([childProfileId, occurredAt])
+}
+
+model Reward {
+  id              String       @id @default(cuid())
+  householdId     String
+  title           String
+  thresholdPoints Int
+  window          RewardWindow @default(WEEKLY)
+  mode            RewardMode   @default(THRESHOLD)
+  active          Boolean      @default(true)
+  createdAt       DateTime     @default(now())
+
+  household Household     @relation(fields: [householdId], references: [id])
+  grants    RewardGrant[]
+}
+
+model RewardGrant {
+  id             String   @id @default(cuid())
+  rewardId       String
+  childProfileId String
+  grantedAt      DateTime @default(now())
+  pointsSpent    Int?
+  note           String?
+
+  reward Reward       @relation(fields: [rewardId], references: [id])
+  child  ChildProfile @relation(fields: [childProfileId], references: [id])
+}
