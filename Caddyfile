@@ -1,10 +1,8 @@
 # Replace chores.home with your actual domain.
 # Caddy auto-provisions TLS via Let's Encrypt.
-chores.home {
+# For production, replace :80 with your domain (e.g. chores.home) and
+# Caddy will auto-provision TLS via Let's Encrypt.
+:80 {
   reverse_proxy app:3000
-
-  # Serve uploaded photos directly from the app container
-  # (already handled by Next.js static serving in /public/uploads)
-
   encode zstd gzip
 }
