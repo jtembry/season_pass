@@ -1,29 +1,44 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { jwtVerify } from "jose";
+import { jwtDecrypt } from "jose";
+import { hkdf } from "@panva/hkdf";
 
-// Lightweight JWT check — no Prisma, no Node.js modules, safe for Edge Runtime.
 const PUBLIC_PATHS = ["/login", "/api/auth", "/api/setup", "/_next", "/favicon.ico", "/uploads"];
+
+// Salt = cookie name, per @auth/core/jwt.js getDerivedEncryptionKey
+const COOKIE_NAMES = ["authjs.session-token", "__Secure-authjs.session-token"];
+
+async function getKey(salt: string): Promise<Uint8Array> {
+  return hkdf(
+    "sha256",
+    process.env.AUTH_SECRET ?? "",
+    salt,
+    `Auth.js Generated Encryption Key (${salt})`,
+    64 // A256CBC-HS512 requires 64 bytes
+  );
+}
 
 export async function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
-
-  // Allow public paths
   if (PUBLIC_PATHS.some((p) => pathname.startsWith(p))) return NextResponse.next();
 
-  const token =
-    req.cookies.get("authjs.session-token")?.value ??
-    req.cookies.get("__Secure-authjs.session-token")?.value;
-
-  if (!token) return NextResponse.redirect(new URL("/login", req.url));
-
-  try {
-    const secret = new TextEncoder().encode(process.env.AUTH_SECRET ?? "");
-    await jwtVerify(token, secret);
-    return NextResponse.next();
-  } catch {
-    return NextResponse.redirect(new URL("/login", req.url));
+  for (const cookieName of COOKIE_NAMES) {
+    const token = req.cookies.get(cookieName)?.value;
+    if (!token) continue;
+    try {
+      const key = await getKey(cookieName);
+      await jwtDecrypt(token, key, {
+        clockTolerance: 15,
+        keyManagementAlgorithms: ["dir"],
+        contentEncryptionAlgorithms: ["A256CBC-HS512", "A256GCM"],
+      });
+      return NextResponse.next();
+    } catch {
+      // try next cookie name
+    }
   }
+
+  return NextResponse.redirect(new URL("/login", req.url));
 }
 
 export const config = {
