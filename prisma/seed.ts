@@ -47,6 +47,16 @@ async function main() {
     },
   });
 
+  const familyManagerHash = await bcrypt.hash("family1234", 12);
+  await prisma.user.create({
+    data: {
+      householdId: household.id,
+      email: "family_manager@demo.local",
+      passwordHash: familyManagerHash,
+      role: "PARENT",
+    },
+  });
+
   // Synthetic children (fictional names)
   const [alex, sam] = await Promise.all([
     prisma.childProfile.create({
