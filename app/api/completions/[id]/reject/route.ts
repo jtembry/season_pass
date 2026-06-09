@@ -7,7 +7,7 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const session = await auth();
-  if (!session) return Response.json({ error: "Unauthorized" }, { status: 401 });
+  if (!session || session.user.role !== "PARENT") return Response.json({ error: "Forbidden" }, { status: 403 });
   const { id } = await params;
 
   const completion = await prisma.completion.findUnique({ where: { id } });

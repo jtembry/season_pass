@@ -2,6 +2,7 @@
 
 import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
+import { SignOutButton } from "@/components/SignOutButton";
 import type { ChildProfile, TaskAssignment, TaskDefinition, Completion, Reward, RewardGrant } from "@/app/generated/prisma/client";
 
 type Assignment = TaskAssignment & { task: TaskDefinition };
@@ -122,6 +123,9 @@ export function KidView({ child, assignments, completions, weeklyPoints, rewards
       />
 
       <div className="max-w-sm mx-auto px-4 py-6 space-y-5">
+        <div className="flex justify-end">
+          <SignOutButton />
+        </div>
         <div className="text-center">
           <div className="text-5xl mb-1">{child.avatar ?? "🧒"}</div>
           <h1 className="text-xl font-bold">{child.displayName}</h1>

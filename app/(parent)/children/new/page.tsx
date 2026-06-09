@@ -10,16 +10,25 @@ export default function NewChildPage() {
   const [displayName, setDisplayName] = useState("");
   const [avatar, setAvatar] = useState("🧒");
   const [pin, setPin] = useState("");
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
+    setError("");
     const res = await fetch("/api/children", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ displayName, avatar, pin: pin || undefined }),
+      body: JSON.stringify({
+        displayName,
+        avatar,
+        pin: pin || undefined,
+        username: username || undefined,
+        password: password || undefined,
+      }),
     });
     setLoading(false);
     if (!res.ok) {
@@ -71,6 +80,35 @@ export default function NewChildPage() {
             pattern="[0-9]{4}"
             className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
+        </div>
+        <div className="border-t pt-4 space-y-4">
+          <p className="text-sm font-medium text-gray-700">Kid login (optional)</p>
+          <p className="text-xs text-gray-500 -mt-3">
+            Give this child a username and password so they can sign in to their own kid mode.
+          </p>
+          <div>
+            <label className="block text-sm font-medium mb-1">Username</label>
+            <input
+              value={username}
+              onChange={(e) => setUsername(e.target.value.toLowerCase())}
+              autoCapitalize="none"
+              autoCorrect="off"
+              placeholder="e.g. alex"
+              pattern="[a-z0-9_]{2,30}"
+              className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1">Password</label>
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="at least 4 characters"
+              minLength={4}
+              className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
         </div>
         <div className="flex gap-3 pt-1">
           <button

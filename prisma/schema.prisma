@@ -9,6 +9,7 @@ datasource db {
 
 enum Role {
   PARENT
+  CHILD
 }
 
 enum TaskCategory {
@@ -86,11 +87,13 @@ model User {
 model ChildProfile {
   id          String    @id @default(cuid())
   householdId String
-  displayName String
-  avatar      String?
-  birthdate   DateTime?
-  pinHash     String?
-  createdAt   DateTime  @default(now())
+  displayName  String
+  avatar       String?
+  birthdate    DateTime?
+  pinHash      String?
+  username     String?   @unique // kid login handle; kids sign in to their own kid mode
+  passwordHash String?   // kid login password; null = parent-opened kid mode only
+  createdAt    DateTime  @default(now())
 
   household     Household           @relation(fields: [householdId], references: [id])
   assignments   TaskAssignment[]

@@ -14,7 +14,7 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const session = await auth();
-  if (!session) return Response.json({ error: "Unauthorized" }, { status: 401 });
+  if (!session || session.user.role !== "PARENT") return Response.json({ error: "Forbidden" }, { status: 403 });
   const { id } = await params;
   const child = await getChild(id, session.user.householdId);
   if (!child) return Response.json({ error: "Not found" }, { status: 404 });
@@ -35,7 +35,7 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const session = await auth();
-  if (!session) return Response.json({ error: "Unauthorized" }, { status: 401 });
+  if (!session || session.user.role !== "PARENT") return Response.json({ error: "Forbidden" }, { status: 403 });
   const { id } = await params;
   const child = await getChild(id, session.user.householdId);
   if (!child) return Response.json({ error: "Not found" }, { status: 404 });

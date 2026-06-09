@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
+import { auth } from "@/auth";
 import { getWeeklyTotal } from "@/lib/ledger";
 import { getDailyPeriodKey, getISOWeekKey, getCurrentWeekBounds } from "@/lib/periods";
 import { KidView } from "./KidView";
@@ -7,8 +8,17 @@ import { KidView } from "./KidView";
 export default async function KidModePage({ params }: { params: Promise<{ childId: string }> }) {
   const { childId } = await params;
 
+  const session = await auth();
+  if (!session) redirect("/login");
+  // A kid may only open their own kid mode; a parent may open any child in
+  // their household.
+  if (session.user.role === "CHILD" && session.user.childProfileId !== childId) {
+    redirect(`/kid/${session.user.childProfileId}`);
+  }
+
   const child = await prisma.childProfile.findUnique({ where: { id: childId } });
   if (!child) notFound();
+  if (child.householdId !== session.user.householdId) notFound();
 
   const today = getDailyPeriodKey();
   const thisWeek = getISOWeekKey();

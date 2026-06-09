@@ -18,8 +18,12 @@ Keep `CLAUDE.md` (repo root) short; it points here.
 1. **Parent reviews everything. No auto-approve.** Every completion lands in a
    parent review queue. The vision agent only writes a *recommendation*; it
    never changes a completion's status.
-1. **Child profiles, not child accounts.** Kids are profiles the parent manages,
-   with an optional PIN for "kid mode." Only parents have real logins.
+1. **Kids get their own login.** Each child profile may have a `username` +
+   `passwordHash`. A kid signs in on the shared `/login` page and lands directly
+   in their own kid mode (`role = CHILD`). Kids are still restricted to kid mode:
+   they cannot view parent pages, approve completions, edit tasks, or adjust
+   points. Parents (`role = PARENT`) remain the only ones who manage the
+   household. (An optional PIN remains for parent-opened kid mode.)
 1. **Points are an append-only ledger,** never a mutable counter on the child.
    Balances and weekly totals are derived by summing ledger entries.
 1. **No materialized recurrence.** Daily/weekly tasks are not pre-generated as
@@ -36,8 +40,9 @@ Keep `CLAUDE.md` (repo root) short; it points here.
 - Manual point adjustments (creates an `ADJUSTMENT` ledger entry).
 - Sees everything.
 
-**Kid mode (a child profile, optional PIN)**
+**Kid (a child profile with a `username` + password, `role = CHILD`)**
 
+- Signs in on `/login`; lands directly in their own kid mode.
 - See today's and this week's assigned tasks.
 - Mark a task done; attach a photo when the task requires one.
 - View own points, progress toward the reward, and the household leaderboard.
@@ -83,7 +88,7 @@ Stack is swappable; this schema translates to any ORM. `periodKey` is the date
 (`2026-06-03`) for daily tasks and the ISO week (`2026-W23`) for weekly tasks.
 
 ```prisma
-enum Role            { PARENT }
+enum Role            { PARENT CHILD }
 enum TaskCategory    { GET_READY BREAKFAST LUNCH DINNER BEDTIME STUDY WEEKLY DAILY_ANYTIME BONUS }
 enum Cadence         { DAILY WEEKLY ONE_TIME }
 enum CompletionStatus{ PENDING_REVIEW APPROVED REJECTED }
@@ -119,10 +124,12 @@ model ChildProfile {
   id          String    @id @default(cuid())
   householdId String
   displayName String
-  avatar      String?
-  birthdate   DateTime?
-  pinHash     String?   // optional kid-mode lock; not a full account
-  createdAt   DateTime  @default(now())
+  avatar       String?
+  birthdate    DateTime?
+  pinHash      String?   // optional lock for parent-opened kid mode
+  username     String?   @unique // kid login handle (role = CHILD)
+  passwordHash String?   // kid login password; null = no self-service login
+  createdAt    DateTime  @default(now())
   household     Household          @relation(fields: [householdId], references: [id])
   assignments   TaskAssignment[]
   completions   Completion[]

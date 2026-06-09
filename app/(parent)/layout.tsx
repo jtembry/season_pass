@@ -6,6 +6,10 @@ import { SignOutButton } from "@/components/SignOutButton";
 export default async function ParentLayout({ children }: { children: React.ReactNode }) {
   const session = await auth();
   if (!session) redirect("/login");
+  // Kids never see parent pages; send them to their own kid mode.
+  if (session.user.role !== "PARENT") {
+    redirect(session.user.childProfileId ? `/kid/${session.user.childProfileId}` : "/login");
+  }
 
   return (
     <div className="min-h-screen flex flex-col">

@@ -17,7 +17,7 @@ const schema = z.object({
 
 export async function GET() {
   const session = await auth();
-  if (!session) return Response.json({ error: "Unauthorized" }, { status: 401 });
+  if (!session || session.user.role !== "PARENT") return Response.json({ error: "Forbidden" }, { status: 403 });
   const tasks = await prisma.taskDefinition.findMany({
     where: { householdId: session.user.householdId },
     orderBy: { title: "asc" },
@@ -27,7 +27,7 @@ export async function GET() {
 
 export async function POST(req: NextRequest) {
   const session = await auth();
-  if (!session) return Response.json({ error: "Unauthorized" }, { status: 401 });
+  if (!session || session.user.role !== "PARENT") return Response.json({ error: "Forbidden" }, { status: 403 });
   const body = schema.safeParse(await req.json());
   if (!body.success) return Response.json({ error: body.error.flatten() }, { status: 400 });
 

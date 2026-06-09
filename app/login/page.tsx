@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 
 export default function LoginPage() {
   const router = useRouter();
-  const [email, setEmail] = useState("");
+  const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -16,15 +16,16 @@ export default function LoginPage() {
     setLoading(true);
     setError("");
     const result = await signIn("credentials", {
-      email,
+      identifier,
       password,
       redirect: false,
     });
     setLoading(false);
     if (result?.error) {
-      setError("Invalid email or password.");
+      setError("Invalid login or password.");
     } else {
-      router.push("/dashboard");
+      // Root page routes parents to the dashboard and kids to their kid mode.
+      router.push("/");
     }
   }
 
@@ -33,16 +34,18 @@ export default function LoginPage() {
       <div className="w-full max-w-sm">
         <h1 className="text-3xl font-bold text-center mb-8">Chore Quest</h1>
         <form onSubmit={handleSubmit} className="bg-white rounded-xl shadow p-8 space-y-5">
-          <h2 className="text-lg font-semibold">Parent sign-in</h2>
+          <h2 className="text-lg font-semibold">Sign in</h2>
           {error && (
             <p className="text-sm text-red-600 bg-red-50 rounded px-3 py-2">{error}</p>
           )}
           <div>
-            <label className="block text-sm font-medium mb-1">Email</label>
+            <label className="block text-sm font-medium mb-1">Email or username</label>
             <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              type="text"
+              autoCapitalize="none"
+              autoCorrect="off"
+              value={identifier}
+              onChange={(e) => setIdentifier(e.target.value)}
               required
               className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
@@ -65,7 +68,9 @@ export default function LoginPage() {
             {loading ? "Signing in…" : "Sign in"}
           </button>
           <p className="text-xs text-gray-500 text-center">
-            Demo: parent@demo.local / demo1234
+            Parent demo: parent@demo.local / demo1234
+            <br />
+            Kid demo: zac / zac1234
           </p>
         </form>
       </div>

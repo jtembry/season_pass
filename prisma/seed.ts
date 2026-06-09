@@ -57,16 +57,35 @@ async function main() {
     },
   });
 
-  // Synthetic children (fictional names)
+  // Synthetic children (fictional names). Each gets a kid-mode login
+  // (username + password) so kids can sign in to their own kid mode.
   const [alex, sam, zac] = await Promise.all([
     prisma.childProfile.create({
-      data: { householdId: household.id, displayName: "Alex", avatar: "🦁" },
+      data: {
+        householdId: household.id,
+        displayName: "Alex",
+        avatar: "🦁",
+        username: "alex",
+        passwordHash: await bcrypt.hash("alex1234", 12),
+      },
     }),
     prisma.childProfile.create({
-      data: { householdId: household.id, displayName: "Sam", avatar: "🐼" },
+      data: {
+        householdId: household.id,
+        displayName: "Sam",
+        avatar: "🐼",
+        username: "sam",
+        passwordHash: await bcrypt.hash("sam1234", 12),
+      },
     }),
     prisma.childProfile.create({
-      data: { householdId: household.id, displayName: "Zac", avatar: "🦊" },
+      data: {
+        householdId: household.id,
+        displayName: "Zac",
+        avatar: "🦊",
+        username: "zac",
+        passwordHash: await bcrypt.hash("zac1234", 12),
+      },
     }),
   ]);
 
