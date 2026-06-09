@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { notFound, redirect } from "next/navigation";
 import { auth } from "@/auth";
-import { getWeeklyTotal } from "@/lib/ledger";
+import { getRewardTotal } from "@/lib/ledger";
 import { getDailyPeriodKey, getISOWeekKey, getCurrentWeekBounds } from "@/lib/periods";
 import { KidView } from "./KidView";
 
@@ -41,21 +41,26 @@ export default async function KidModePage({ params }: { params: Promise<{ childI
     orderBy: { displayName: "asc" },
   });
 
-  const siblingWeeklyPoints = await Promise.all(
+  const rewards = await prisma.reward.findMany({
+    where: { householdId: child.householdId, active: true },
+  });
+
+  // Headline points and the leaderboard follow the first active reward's
+  // window (weekly vs all-time total) so they stay consistent.
+  const pointsWindow = rewards[0]?.window ?? "WEEKLY";
+  const pointsLabel = pointsWindow === "WEEKLY" ? "pts this week" : "pts total";
+
+  const leaderboard = await Promise.all(
     siblings.map(async (s) => ({
       id: s.id,
       displayName: s.displayName,
       avatar: s.avatar,
-      points: await getWeeklyTotal(s.id),
+      points: await getRewardTotal(s.id, pointsWindow),
     }))
   );
-  siblingWeeklyPoints.sort((a, b) => b.points - a.points);
+  leaderboard.sort((a, b) => b.points - a.points);
 
-  const weeklyPoints = await getWeeklyTotal(childId);
-
-  const rewards = await prisma.reward.findMany({
-    where: { householdId: child.householdId, active: true },
-  });
+  const points = await getRewardTotal(childId, pointsWindow);
 
   const recentGrants = await prisma.rewardGrant.findMany({
     where: {
@@ -70,9 +75,10 @@ export default async function KidModePage({ params }: { params: Promise<{ childI
       child={child}
       assignments={assignments}
       completions={completions}
-      weeklyPoints={weeklyPoints}
+      points={points}
+      pointsLabel={pointsLabel}
       rewards={rewards}
-      leaderboard={siblingWeeklyPoints}
+      leaderboard={leaderboard}
       recentGrants={recentGrants}
       today={today}
       thisWeek={thisWeek}

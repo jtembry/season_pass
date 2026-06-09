@@ -1,6 +1,6 @@
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
-import { getWeeklyTotal } from "@/lib/ledger";
+import { getRewardTotal } from "@/lib/ledger";
 import Link from "next/link";
 
 export default async function DashboardPage() {
@@ -13,10 +13,16 @@ export default async function DashboardPage() {
     prisma.reward.findMany({ where: { householdId, active: true } }),
   ]);
 
+  // The headline progress tracks the first active reward. Its window decides
+  // whether we count weekly points or the all-time total.
+  const reward = rewards[0];
+  const pointsWindow = reward?.window ?? "WEEKLY";
+  const pointsLabel = pointsWindow === "WEEKLY" ? "pts this week" : "pts total";
+
   const childTotals = await Promise.all(
     children.map(async (c) => ({
       ...c,
-      weeklyPoints: await getWeeklyTotal(c.id),
+      points: await getRewardTotal(c.id, pointsWindow),
     }))
   );
 
@@ -39,14 +45,13 @@ export default async function DashboardPage() {
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         {childTotals.map((child) => {
-          const reward = rewards[0];
-          const pct = reward ? Math.min(100, Math.round((child.weeklyPoints / reward.thresholdPoints) * 100)) : null;
+          const pct = reward ? Math.min(100, Math.round((child.points / reward.thresholdPoints) * 100)) : null;
           return (
             <div key={child.id} className="bg-white rounded-xl shadow-sm border p-5">
               <div className="flex items-start justify-between mb-3">
                 <div>
                   <p className="font-semibold">{child.displayName}</p>
-                  <p className="text-sm text-gray-500">{child.weeklyPoints} pts this week</p>
+                  <p className="text-sm text-gray-500">{child.points} {pointsLabel}</p>
                 </div>
                 {child.avatar && (
                   <span className="text-3xl">{child.avatar}</span>

@@ -231,7 +231,7 @@ async function main() {
       householdId: household.id,
       title: "Holiday World ticket",
       thresholdPoints: 280,
-      window: "WEEKLY",
+      window: "CUMULATIVE",
       mode: "THRESHOLD",
     },
   });

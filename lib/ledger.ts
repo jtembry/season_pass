@@ -17,3 +17,14 @@ export async function getAllTimeTotal(childProfileId: string): Promise<number> {
   });
   return result._sum.amount ?? 0;
 }
+
+// Points that count toward a reward, depending on its window:
+// WEEKLY sums the current ISO week, CUMULATIVE (total) sums all time.
+export async function getRewardTotal(
+  childProfileId: string,
+  window: "WEEKLY" | "CUMULATIVE"
+): Promise<number> {
+  return window === "WEEKLY"
+    ? getWeeklyTotal(childProfileId)
+    : getAllTimeTotal(childProfileId);
+}

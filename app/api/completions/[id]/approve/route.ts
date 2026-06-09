@@ -1,7 +1,7 @@
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { NextRequest } from "next/server";
-import { getWeeklyTotal } from "@/lib/ledger";
+import { getRewardTotal } from "@/lib/ledger";
 import { getCurrentWeekBounds } from "@/lib/periods";
 
 export async function POST(
@@ -47,22 +47,25 @@ export async function POST(
     }),
   ]);
 
-  // Check reward thresholds after commit
-  const weeklyTotal = await getWeeklyTotal(completion.childProfileId);
+  // Check reward thresholds after commit. A reward's window decides which
+  // total counts: WEEKLY sums the current ISO week, CUMULATIVE the all-time
+  // total. A weekly reward can be earned once per week; a cumulative reward
+  // is earned once, ever.
   const { start, end } = getCurrentWeekBounds();
 
   const rewards = await prisma.reward.findMany({
-    where: { householdId: completion.householdId, active: true, mode: "THRESHOLD", window: "WEEKLY" },
+    where: { householdId: completion.householdId, active: true, mode: "THRESHOLD" },
   });
 
   for (const reward of rewards) {
-    const prevTotal = weeklyTotal - pointsAwarded;
-    if (prevTotal < reward.thresholdPoints && weeklyTotal >= reward.thresholdPoints) {
+    const total = await getRewardTotal(completion.childProfileId, reward.window);
+    const prevTotal = total - pointsAwarded;
+    if (prevTotal < reward.thresholdPoints && total >= reward.thresholdPoints) {
       const alreadyGranted = await prisma.rewardGrant.findFirst({
         where: {
           rewardId: reward.id,
           childProfileId: completion.childProfileId,
-          grantedAt: { gte: start, lt: end },
+          ...(reward.window === "WEEKLY" ? { grantedAt: { gte: start, lt: end } } : {}),
         },
       });
       if (!alreadyGranted) {
@@ -70,7 +73,7 @@ export async function POST(
           data: {
             rewardId: reward.id,
             childProfileId: completion.childProfileId,
-            note: `Threshold reached: ${weeklyTotal} pts`,
+            note: `Threshold reached: ${total} pts`,
           },
         });
       }

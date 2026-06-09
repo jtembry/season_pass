@@ -1,6 +1,6 @@
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
-import { getWeeklyTotal, getAllTimeTotal } from "@/lib/ledger";
+import { getRewardTotal } from "@/lib/ledger";
 import { getISOWeekKey } from "@/lib/periods";
 
 export default async function LeaderboardPage() {
@@ -10,28 +10,33 @@ export default async function LeaderboardPage() {
     orderBy: { displayName: "asc" },
   });
 
-  const standings = await Promise.all(
-    children.map(async (c) => ({
-      ...c,
-      weeklyPoints: await getWeeklyTotal(c.id),
-      allTimePoints: await getAllTimeTotal(c.id),
-    }))
-  );
-  standings.sort((a, b) => b.weeklyPoints - a.weeklyPoints);
-
   const rewards = await prisma.reward.findMany({
     where: { householdId: session!.user.householdId, active: true },
   });
 
+  // Rank by the first active reward's window: weekly points or all-time total.
+  const pointsWindow = rewards[0]?.window ?? "WEEKLY";
+  const pointsLabel = pointsWindow === "WEEKLY" ? "this week" : "total";
+
+  const standings = await Promise.all(
+    children.map(async (c) => ({
+      ...c,
+      points: await getRewardTotal(c.id, pointsWindow),
+    }))
+  );
+  standings.sort((a, b) => b.points - a.points);
+
   return (
     <div className="space-y-5">
       <h1 className="text-2xl font-bold">Leaderboard</h1>
-      <p className="text-sm text-gray-500">Week {getISOWeekKey()}</p>
+      <p className="text-sm text-gray-500">
+        {pointsWindow === "WEEKLY" ? `Week ${getISOWeekKey()}` : "All-time totals"}
+      </p>
 
       <div className="bg-white border rounded-xl overflow-hidden">
         {standings.map((child, i) => {
           const reward = rewards[0];
-          const pct = reward ? Math.min(100, Math.round((child.weeklyPoints / reward.thresholdPoints) * 100)) : null;
+          const pct = reward ? Math.min(100, Math.round((child.points / reward.thresholdPoints) * 100)) : null;
           return (
             <div key={child.id} className="flex items-center gap-4 px-5 py-4 border-b last:border-0">
               <span className="text-xl font-bold text-gray-300 w-6 text-center">{i + 1}</span>
@@ -48,8 +53,8 @@ export default async function LeaderboardPage() {
                 )}
               </div>
               <div className="text-right">
-                <p className="font-bold text-lg">{child.weeklyPoints}</p>
-                <p className="text-xs text-gray-400">this week</p>
+                <p className="font-bold text-lg">{child.points}</p>
+                <p className="text-xs text-gray-400">{pointsLabel}</p>
               </div>
             </div>
           );
@@ -64,7 +69,7 @@ export default async function LeaderboardPage() {
           <p className="font-semibold text-amber-800">🏆 Active reward</p>
           {rewards.map((r) => (
             <p key={r.id} className="text-sm text-amber-700 mt-1">
-              {r.title} — {r.thresholdPoints} pts/{r.window.toLowerCase()}
+              {r.title} — {r.thresholdPoints} pts {r.window === "WEEKLY" ? "per week" : "total"}
             </p>
           ))}
         </div>

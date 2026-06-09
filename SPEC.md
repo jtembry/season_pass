@@ -74,11 +74,13 @@ States: `PENDING_REVIEW` → `APPROVED` | `REJECTED`
 
 ## Reward / threshold logic
 
-- Their real model is **threshold over a weekly window**: hit `thresholdPoints`
-  within the ISO week → unlock the reward (`mode = THRESHOLD`).
+- A reward unlocks when a child reaches `thresholdPoints` (`mode = THRESHOLD`).
+  Its `window` decides which points count:
+  - `CUMULATIVE` (default) — the child's **all-time total**. Earned once, ever.
+  - `WEEKLY` — points within the current ISO week. Earnable once per week.
 - `mode = REDEEMABLE` (spend points to claim) is a future variant; not core.
-- Weekly total = sum of `PointsLedgerEntry.amount` for the child where
-  `occurredAt` falls in the current ISO week.
+- Cumulative total = sum of all `PointsLedgerEntry.amount` for the child.
+  Weekly total = the same sum restricted to `occurredAt` in the current ISO week.
 
 -----
 

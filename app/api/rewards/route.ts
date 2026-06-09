@@ -6,7 +6,7 @@ import { z } from "zod";
 const schema = z.object({
   title: z.string().min(1).max(200),
   thresholdPoints: z.number().int().min(1),
-  window: z.enum(["WEEKLY", "CUMULATIVE"]).default("WEEKLY"),
+  window: z.enum(["WEEKLY", "CUMULATIVE"]).default("CUMULATIVE"),
   mode: z.enum(["THRESHOLD", "REDEEMABLE"]).default("THRESHOLD"),
 });
 

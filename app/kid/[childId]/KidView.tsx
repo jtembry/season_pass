@@ -12,7 +12,8 @@ type Props = {
   child: ChildProfile;
   assignments: Assignment[];
   completions: Completion[];
-  weeklyPoints: number;
+  points: number;
+  pointsLabel: string;
   rewards: Reward[];
   leaderboard: { id: string; displayName: string; avatar: string | null; points: number }[];
   recentGrants: Grant[];
@@ -20,7 +21,7 @@ type Props = {
   thisWeek: string;
 };
 
-export function KidView({ child, assignments, completions, weeklyPoints, rewards, leaderboard, recentGrants, today, thisWeek }: Props) {
+export function KidView({ child, assignments, completions, points, pointsLabel, rewards, leaderboard, recentGrants, today, thisWeek }: Props) {
   const router = useRouter();
   const [loading, setLoading] = useState<string | null>(null);
   const [photoFor, setPhotoFor] = useState<string | null>(null);
@@ -82,7 +83,7 @@ export function KidView({ child, assignments, completions, weeklyPoints, rewards
   const dailyTasks = assignments.filter((a) => a.task.cadence === "DAILY" || a.task.cadence === "ONE_TIME");
   const weeklyTasks = assignments.filter((a) => a.task.cadence === "WEEKLY");
   const reward = rewards[0];
-  const pct = reward ? Math.min(100, Math.round((weeklyPoints / reward.thresholdPoints) * 100)) : null;
+  const pct = reward ? Math.min(100, Math.round((points / reward.thresholdPoints) * 100)) : null;
 
   const statusBadge = (task: TaskDefinition) => {
     const c = getCompletion(task);
@@ -129,14 +130,14 @@ export function KidView({ child, assignments, completions, weeklyPoints, rewards
         <div className="text-center">
           <div className="text-5xl mb-1">{child.avatar ?? "🧒"}</div>
           <h1 className="text-xl font-bold">{child.displayName}</h1>
-          <p className="text-sm text-gray-500">{weeklyPoints} pts this week</p>
+          <p className="text-sm text-gray-500">{points} {pointsLabel}</p>
         </div>
 
         {reward && pct !== null && (
           <div className="bg-white rounded-xl border p-4">
             <div className="flex justify-between text-sm mb-2">
               <span className="font-medium">{reward.title}</span>
-              <span className="text-gray-500">{weeklyPoints}/{reward.thresholdPoints}</span>
+              <span className="text-gray-500">{points}/{reward.thresholdPoints}</span>
             </div>
             <div className="h-3 bg-gray-100 rounded-full overflow-hidden">
               <div className="h-full bg-blue-500 rounded-full transition-all" style={{ width: `${pct}%` }} />
