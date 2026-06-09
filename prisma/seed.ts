@@ -58,12 +58,15 @@ async function main() {
   });
 
   // Synthetic children (fictional names)
-  const [alex, sam] = await Promise.all([
+  const [alex, sam, beth] = await Promise.all([
     prisma.childProfile.create({
       data: { householdId: household.id, displayName: "Alex", avatar: "🦁" },
     }),
     prisma.childProfile.create({
       data: { householdId: household.id, displayName: "Sam", avatar: "🐼" },
+    }),
+    prisma.childProfile.create({
+      data: { householdId: household.id, displayName: "Beth", avatar: "🦊" },
     }),
   ]);
 
@@ -192,10 +195,10 @@ async function main() {
     }),
   ]);
 
-  // Assign all tasks to both children
+  // Assign all tasks to every child
   await Promise.all(
     tasks.flatMap((task) =>
-      [alex.id, sam.id].map((childId) =>
+      [alex.id, sam.id, beth.id].map((childId) =>
         prisma.taskAssignment.create({
           data: { taskDefinitionId: task.id, childProfileId: childId },
         })
