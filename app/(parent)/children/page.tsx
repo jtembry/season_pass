@@ -24,27 +24,17 @@ export default async function ChildrenPage() {
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {children.map((child) => (
-            <div
+            <Link
               key={child.id}
-              className="bg-white border rounded-xl p-5 flex items-center gap-4"
+              href={`/children/${child.id}`}
+              className="bg-white border rounded-xl p-5 hover:shadow-md transition flex items-center gap-4"
             >
-              <Link
-                href={`/children/${child.id}`}
-                className="flex items-center gap-4 flex-1 hover:opacity-80 transition"
-              >
-                <span className="text-3xl">{child.avatar ?? "🧒"}</span>
-                <div>
-                  <p className="font-semibold">{child.displayName}</p>
-                  <p className="text-xs text-gray-500">{child._count.assignments} task{child._count.assignments !== 1 ? "s" : ""} assigned</p>
-                </div>
-              </Link>
-              <Link
-                href={`/kid/${child.id}`}
-                className="shrink-0 bg-gray-100 text-gray-700 text-sm rounded-lg px-3 py-2 hover:bg-gray-200 transition"
-              >
-                Open kid mode
-              </Link>
-            </div>
+              <span className="text-3xl">{child.avatar ?? "🧒"}</span>
+              <div>
+                <p className="font-semibold">{child.displayName}</p>
+                <p className="text-xs text-gray-500">{child._count.assignments} task{child._count.assignments !== 1 ? "s" : ""} assigned</p>
+              </div>
+            </Link>
           ))}
         </div>
       )}
