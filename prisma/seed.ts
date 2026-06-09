@@ -26,13 +26,23 @@ async function main() {
 
   const household = await prisma.household.create({ data: { name: "Demo Family" } });
 
-  // Parent account
+  // Parent accounts
   const passwordHash = await bcrypt.hash("demo1234", 12);
   await prisma.user.create({
     data: {
       householdId: household.id,
       email: "parent@demo.local",
       passwordHash,
+      role: "PARENT",
+    },
+  });
+
+  const bethHash = await bcrypt.hash("beth1234", 12);
+  await prisma.user.create({
+    data: {
+      householdId: household.id,
+      email: "beth@demo.local",
+      passwordHash: bethHash,
       role: "PARENT",
     },
   });
