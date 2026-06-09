@@ -67,6 +67,9 @@ export default function LoginPage() {
           >
             {loading ? "Signing in…" : "Sign in"}
           </button>
+          <p className="text-xs text-gray-500 text-center">
+            Kid demo: zac / hotwheels
+          </p>
         </form>
       </div>
     </div>
