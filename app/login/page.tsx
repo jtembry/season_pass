@@ -67,11 +67,6 @@ export default function LoginPage() {
           >
             {loading ? "Signing in…" : "Sign in"}
           </button>
-          <p className="text-xs text-gray-500 text-center">
-            Parent demo: parent@demo.local / demo1234
-            <br />
-            Kid demo: zac / zac1234
-          </p>
         </form>
       </div>
     </div>
